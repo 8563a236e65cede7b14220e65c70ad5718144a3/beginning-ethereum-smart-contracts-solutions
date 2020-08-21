@@ -335,3 +335,4 @@ cython_debug/
 *.idea
 
 Chapter04/data
+Chapter06/data
