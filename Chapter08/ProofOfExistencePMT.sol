@@ -7,7 +7,8 @@ contract ProofOfExistence {
         proofs[proof] = true;
     }
 
-    function notarize(string memory document) public {
+    function notarize(string memory document) public payable {
+        require(msg.value == 1 ether);
         storeProof(proofFor(document));
     }
 
