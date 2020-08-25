@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Ethereum Betting</h1>
+        <center>
+            <label for="numberToWager"
+                   class="col-lg-2 control-label">
+                Number to wager
+            </label>
+            <input id="numberToWager" type="text">
+            <label for="etherToWager"
+                   class="col-lg-2 control-label">
+                Number of ethers to wager
+            </label>
+            <input id="etherToWager" type="text">
+            <button id="btnBet">Bet</button>
+            <hr>
+            <h2 id="result"></h2>
+            <h2 id="status"></h2>
+        </center>
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+        <script>
+            if(typeof web3 !== "undefined"){
+                async function enableAccounts(){
+                    await ethereum.enable();
+                }
+                enableAccounts();
+            } else {
+                web3 = new Web3(
+                    new Web3.providers.HttpProvider(
+                        "http://localhost:8545"
+                    )
+                );
+            }
+
+            var abi = [
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_minWager",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "constructor"
+                },
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "players",
+                            "type": "uint256"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "maxPlayers",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "Status",
+                    "type": "event"
+                },
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "number",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "WinningNumber",
+                    "type": "event"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "number",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "bet",
+                    "outputs": [],
+                    "stateMutability": "payable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getStatus",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getWinningNumber",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "kill",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+
+            var bettingContract = web3.eth.contract(abi);
+            var contractAddress =
+                "0xC198dBd7cb2ca347d619F2B62D58675ce094643F";
+            var contract = bettingContract.at(contractAddress);
+
+            var _minWager = 1;
+
+            var winningNumberEvent = contract.WinningNumber();
+            winningNumberEvent.watch((error, result) => {
+                    if(!error){
+                        $("#result").html("Winning Number is: " +
+                            result.args.number);
+                    }
+                }
+            );
+
+            var statusEvent = contract.Status();
+            statusEvent.watch((error, result) => {
+                    if(!error){
+                        $("#status").html("Status: " +
+                            result.args.players +
+                            " of " + result.args.maxPlayers);
+                    }
+                }
+            );
+
+            contract.getStatus(
+                (error, result) => {
+                    if(!error){
+                        $("#status").html("Status: " +
+                            result[0].c[0] +
+                            " of " + result[1].c[0]);
+                    }
+                }
+            );
+
+            $("#btnBet").click(function(){
+                    var numberToWager = $("#numberToWager").val();
+                    var etherToWager = $("#etherToWager").val();
+                    contract.bet(numberToWager, {
+                            gas: 300000,
+                            from: web3.eth.defaultAccount,
+                            value: web3.toWei(etherToWager, "ether")
+                        }, (err, result) => {
+                            if(err){
+                                $("#result").html(err);
+                            } else {
+                                $("#result").html(
+                                    "Number has been submitted for betting."
+                                );
+                            }
+                        }
+                    );
+                }
+            );
+        </script>
+    </div>
+</body>
+</html>
